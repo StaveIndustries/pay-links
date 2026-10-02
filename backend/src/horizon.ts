@@ -29,8 +29,11 @@ export async function findMatchingPayment(link: PaymentLink): Promise<MatchedPay
     const payment = record as Horizon.HorizonApi.PaymentOperationResponse;
     if (payment.asset_type === 'native' ? link.asset !== 'XLM' : payment.asset_code !== link.asset) continue;
     if (payment.amount !== link.amount) continue;
-    // Memo lives on the transaction, not the operation - fetch it.
-    const tx = await payment.transaction();
+    // Memo lives on the transaction, not the operation - fetch it by hash.
+    const tx = await server()
+      .transactions()
+      .transaction(payment.transaction_hash)
+      .call();
     const memo = tx.memo_type === 'text' ? (tx.memo as string) : '';
     if (memo === link.memo) {
       return { txHash: tx.hash };
